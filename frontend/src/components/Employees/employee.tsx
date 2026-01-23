@@ -3,6 +3,7 @@ import axios from "axios";
 import { DeleteIcon, Edit2, PlusIcon, Search } from "lucide-react";
 import EmployeeCreateForm from "./createEmployee";
 import UpdateEmployee from "./updateEmployee";
+import { useNavigate } from "react-router-dom";
 
 export type EmployeeType = {
   id?: string;
@@ -25,6 +26,8 @@ const Employee = () => {
   const [sortField, setSortField] = React.useState<SortField>(null);
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("asc");
 
+  const navigate = useNavigate();
+
   const addEmployeeToUI = (newEmployee: EmployeeType) => {
     setEmployees((prev) => [newEmployee, ...prev]);
   };
@@ -41,9 +44,15 @@ const Employee = () => {
       try {
         const response = await axios.get<EmployeeType[]>(
           `${import.meta.env.VITE_API_URL}/api/employee/getAll`,
+          { withCredentials: true },
         );
+
         setEmployees(response.data);
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 403) {
+          navigate("/403");
+          return;
+        }
         console.error("Error fetching employees:", error);
       }
     };

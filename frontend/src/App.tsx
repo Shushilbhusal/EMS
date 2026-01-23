@@ -6,6 +6,7 @@ import SignUpPage from "./components/auth/Signup";
 import Employee from "./components/Employees/employee";
 import IsLoggedIn from "./components/protectedRoute/isLoggedIn";
 import VerifyEmail from "./components/auth/verifyEmail";
+import Unauthorized from "./components/pages/unAuthorized";
 
 const router = createBrowserRouter([
   {
@@ -16,42 +17,44 @@ const router = createBrowserRouter([
         <Navbar />
         <Home />
       </>
-    )
+    ),
   },
 
   {
-    path: '/login',
-    element: <LoginPage />
-  }
-,
+    path: "/login",
+    element: <LoginPage />,
+  },
   {
-    path:"/signup",
-    element: <SignUpPage />
+    path: "/signup",
+    element: <SignUpPage />,
   },
 
   {
-    path: '/employees',
+    path: "/employees",
     element: (
       <>
-       <IsLoggedIn>
-        <Navbar />
-        <Employee />
+        <IsLoggedIn>
+          <Navbar />
+          <Employee />
         </IsLoggedIn>
       </>
-    )
-  }
-  ,
+    ),
+  },
 
   {
-    path:"verify-email",
-    element: <VerifyEmail/>
-  }
+    path: "/verify-email",
+    element: <VerifyEmail />,
+  },
 
+  {
+    path: "/403",
+    element: <Unauthorized />,
+  },
 ]);
 
 function App() {
   return (
-    <RouterProvider router={router} />  // Just this
+    <RouterProvider router={router} /> // Just this
   );
 }
 

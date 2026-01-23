@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
@@ -6,11 +7,16 @@ const VerifyEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const hasRun = useRef(false);
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const token = searchParams.get("token");
 
     if (!token) {
@@ -24,15 +30,12 @@ const VerifyEmail: React.FC = () => {
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/api/auth/verify-email`,
-          {
-            params: { token },
-          },
+          { params: { token } },
         );
 
         setMessage(res.data.message || "Email verified successfully");
         setError(false);
 
-        // Redirect to login after 3 seconds
         setTimeout(() => navigate("/login"), 3000);
       } catch (err: any) {
         setError(true);
@@ -45,7 +48,7 @@ const VerifyEmail: React.FC = () => {
     };
 
     verifyEmail();
-  }, []);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50">

@@ -3,34 +3,30 @@ import fs from "fs";
 import path from "path";
 import type { Request, Response, NextFunction } from "express";
 
-// Ensure uploads directory exists
+// 1. Ensure uploads directory exists, this is where files will be stored
 const uploadDir = path.join(process.cwd(), "/image");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure Multer storage
+// 2. Configure Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9); //Prevents filename collision
     cb(null, `${uniqueSuffix}-${file.originalname}`);
   },
 });
 
-// File filter
+// 3. File filter security
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ): void => {
-  const allowedTypes = [
-    "image/png",
-    "image/jpeg",
-    "image/jpg",
-  ];
+  const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -39,12 +35,12 @@ const fileFilter = (
   }
 };
 
-// Initialize Multer
+// Initialize Multer, Multer instance
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 500 * 1024 * 1024, // limit for 5MB
+    fileSize: 5 * 1024 * 1024, // limit for 5MB
   },
 });
 

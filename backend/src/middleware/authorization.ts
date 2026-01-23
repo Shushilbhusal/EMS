@@ -5,7 +5,7 @@ export const authorize = (roles: string[]) => {
     try {
       const userRole = req.user?.role;
         if (!userRole || !roles.includes(userRole)) {
-        return res.status(403).json({ error: "Forbidden" });
+        return res.status(403).json({ message: "Forbidden" });
         }
         next();
     } catch (error) {

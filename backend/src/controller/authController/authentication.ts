@@ -51,12 +51,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = (req: Request, res: Response) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    path: "/",
-  });
+  res.clearCookie("token");
   return res.status(200).json({ message: "Logout successful" });
 };
 
@@ -87,6 +82,7 @@ export const register = async (req: Request, res: Response) => {
   try {
     // check if user already exist
     const existingUser = await prisma.user.findUnique({ where: { email } });
+
     if (existingUser && existingUser.isEmailVerified === true) {
       return res.status(409).json({ message: "Email already registered" });
     }
@@ -124,12 +120,10 @@ export const register = async (req: Request, res: Response) => {
     `,
     });
 
-    res
-      .status(201)
-      .json({
-        message: "User registered click Link in gmail to verify email",
-        userId: newUser.id,
-      });
+    res.status(201).json({
+      message: "User registered click Link in gmail to verify email",
+      userId: newUser.id,
+    });
   } catch (error) {
     res.status(500).json({ error: "Failed to register user" });
   }
@@ -169,49 +163,86 @@ export const verifyEmail = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const { userName, email, password, role } = req.body;
-    const profileImage = req.file?.path;
+    const profileImagePath = req.file?.path;
+    console.log(profileImagePath)
+    const { id } = req.params;
 
-    // check if user exist or not
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "User id not provided",
+      });
+    }
+
+    //  Find user by ID
     const user = await prisma.user.findUnique({
-      where: {
-        email: email,
-      },
+      where: { id },
     });
 
     if (!user) {
       return res.status(404).json({
-        message: "user not found",
         success: false,
+        message: "User not found",
       });
     }
-    // if password is provided hash first
+
+    // Hash password if provided
+    let hashedPassword = user.password;
     if (password) {
-      const hashedPassword = bcrypt.hash(password, 10);
+      hashedPassword = await bcrypt.hash(password, 10);
     }
 
-    // if image is provided store in coludnary
-    if (profileImage) {
-      // Delete old photo if exists
-      if (user.profileImage) {
-        const publicId = user.profileImage.split("/").pop()?.split(".")[0];
-        if (publicId) {
-          try {
-            await deleteMediaFromCloudinary(publicId);
-          } catch (err) {
-            console.warn("Failed to delete old Cloudinary image:", err);
-          }
+    //  Handle profile image upload
+    let newProfileImage = user.profileImage;
+    let newProfileImagePublicId = user.profileImagePublicId;
+
+    if (profileImagePath) {
+      // Delete old image from Cloudinary
+      if (user.profileImagePublicId) {
+        try {
+          await deleteMediaFromCloudinary(user.profileImagePublicId);
+        } catch (err) {
+          console.warn("Failed to delete old Cloudinary image:", err);
         }
       }
 
-      // Upload new photo
-      const cloudResponse = await uploadMedia(profileImage);
-      if (!cloudResponse?.secure_url) {
+      // Upload new image
+      const cloudResponse = await uploadMedia(profileImagePath);
+
+      if (!cloudResponse?.secure_url || !cloudResponse?.public_id) {
         return res.status(400).json({
           success: false,
-          message: "Failed to upload new profile photo",
+          message: "Failed to upload profile image",
         });
       }
-      const newProfileImage = cloudResponse.secure_url;
+
+      newProfileImage = cloudResponse.secure_url;
+      newProfileImagePublicId = cloudResponse.public_id;
     }
-  } catch (error) {}
+
+    // Update user
+    const updatedProfile = await prisma.user.update({
+      where: { id },
+      data: {
+        userName: userName ?? user.userName,
+        email: email ?? user.email,
+        Role: role ?? user.Role,
+        password: hashedPassword,
+        profileImage: newProfileImage,
+        profileImagePublicId: newProfileImagePublicId,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };

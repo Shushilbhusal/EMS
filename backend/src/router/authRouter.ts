@@ -9,6 +9,6 @@ authRouter.post("/logout", logout);
 authRouter.post("/register", register);
 authRouter.get("/profile", isLoggedIn, getProfile);
 authRouter.get("/verify-email", verifyEmail);
-authRouter.patch("/updateProfile", isLoggedIn, handleFileUpload('profileImage'), updateProfile);
+authRouter.patch("/updateProfile/:id", isLoggedIn, handleFileUpload('profileImage'), updateProfile);
 
 export default authRouter;

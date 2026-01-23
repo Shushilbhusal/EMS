@@ -12,7 +12,7 @@ import { authorize } from "../middleware/authorization.js";
 const router = express.Router();
 
 // GET all employees
-router.get("/getAll", isLoggedIn, authorize(["ADMIN"]), getAllEmployees);
+router.get("/getAll", isLoggedIn,authorize(["ADMIN"]), getAllEmployees);
 
 // GET single employee by id
 router.get("/get/:id", getEmployee);

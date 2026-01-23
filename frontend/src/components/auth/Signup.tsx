@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 // form validation using zod
 const signUpSchema = z.object({
@@ -17,8 +17,6 @@ const SignUpPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +29,7 @@ const SignUpPage: React.FC = () => {
     if (!validationResult.success) {
       const fieldErrors: Record<string, string> = {};
 
-      validationResult.error.issues.forEach((err: any) => {
+      validationResult.error.issues.forEach((err) => {
         const fieldName = err.path[0] as string;
         fieldErrors[fieldName] = err.message;
       });
@@ -39,7 +37,7 @@ const SignUpPage: React.FC = () => {
       setErrors(fieldErrors);
       return;
     }
-    console.log(userName,email,password)
+    console.log(userName, email, password);
 
     // Clear errors if validation passes
     setErrors({});
@@ -54,8 +52,11 @@ const SignUpPage: React.FC = () => {
         setEmail("");
         setPassword("");
       }
-    } catch (error:any) {
-      alert(error.response?.data?.message || "Registration failed. Try again.");
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      alert(
+        axiosError.response?.data?.message || "Registration failed. Try again.",
+      );
     }
   };
 
