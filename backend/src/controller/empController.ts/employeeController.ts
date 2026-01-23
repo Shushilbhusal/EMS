@@ -1,0 +1,108 @@
+import prisma from "../../lib/db.js";
+import type { Request, Response } from "express";
+
+// Get all employees
+export const getAllEmployees = async (req: Request, res: Response) => {
+  try {
+    const employees = await prisma.employee.findMany();
+    res.status(200).json(employees);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch employees" });
+  }
+};
+
+// Get single employee by ID
+export const getEmployee = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    console.log(id);
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ error: "Invalid employee id" });
+    }
+    const employee = await prisma.employee.findUnique({ where: { id } });
+
+    if (!employee) return res.status(404).json({ error: "Employee not found" });
+
+    res.status(200).json(employee);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch employee" });
+  }
+};
+
+// Create new employee
+export const createEmployee = async (req: Request, res: Response) => {
+  try {
+    const { firstName, lastName, email, salary } = req.body;
+
+    if (!firstName || !lastName || !email || !salary) {
+      return res.status(400).json({ error: "all fields are required" });
+    }
+    console.log(req.body);
+
+    const newEmployee = await prisma.employee.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        salary: Number(salary),
+      },
+    });
+
+    res.status(201).json({
+      message: "Employee created successfully",
+      data: newEmployee,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create employee" });
+  }
+};
+
+// Update employee
+export const updateEmployee = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, email, salary } = req.body;
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ error: "Invalid employee id" });
+    }
+
+    if (!firstName || !lastName || !email || !salary) {
+      return res.status(400).json({ error: "all fields are required" });
+    }
+
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: {
+        firstName,
+        lastName,
+        email,
+        ...(salary && { salary: Number(salary) }),
+      },
+    });
+
+    res.status(200).json({
+      message: "Updated Successfully",
+      data: updatedEmployee,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update employee" });
+  }
+};
+
+// Delete employee
+export const deleteEmployee = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ error: "Invalid employee id" });
+    }
+
+    await prisma.employee.delete({ where: { id } });
+
+    res.status(200).json({ message: "Employee deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete employee" });
+  }
+};
