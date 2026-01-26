@@ -7,9 +7,9 @@ const VerifyEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const hasRun = useRef(false);
+  const hasRun = useRef(false);      
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);    
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
 

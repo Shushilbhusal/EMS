@@ -7,6 +7,7 @@ import Employee from "./components/Employees/employee";
 import IsLoggedIn from "./components/protectedRoute/isLoggedIn";
 import VerifyEmail from "./components/auth/verifyEmail";
 import Unauthorized from "./components/pages/unAuthorized";
+import RedirectIfLoggedIn from "./components/protectedRoute/protectedLoggedIn";
 
 const router = createBrowserRouter([
   {
@@ -22,11 +23,21 @@ const router = createBrowserRouter([
 
   {
     path: "/login",
-    element: <LoginPage />,
+    element: (
+      <>
+        <RedirectIfLoggedIn>
+          <LoginPage />
+        </RedirectIfLoggedIn>
+      </>
+    ),
   },
   {
     path: "/signup",
-    element: <SignUpPage />,
+    element: <>
+        <RedirectIfLoggedIn>
+          <SignUpPage />
+        </RedirectIfLoggedIn>
+      </>,
   },
 
   {

@@ -11,6 +11,7 @@ import { mailer } from "../../lib/mailer.js";
 import crypto from "crypto";
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  console.log(email, password)
   try {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -65,7 +66,7 @@ export const getProfile = async (req: Request, res: Response) => {
     const userIdString = String(userId);
     const user = await prisma.user.findUnique({
       where: { id: userIdString },
-      select: { id: true, email: true, userName: true, Role: true },
+      select: { id: true, email: true, userName: true, Role: true, profileImage: true },
     });
     if (!user) {
       return res.status(404).json({ error: "User not found" });

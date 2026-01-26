@@ -7,4 +7,4 @@ const IsLoggedIn = ({children}: {children: React.ReactNode}) => {
   return token ? children : <NotFoundPage />;
 }
 
-export default IsLoggedIn
+export default IsLoggedIn 
