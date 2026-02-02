@@ -1,38 +1,38 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// generator client {
+//   provider = "prisma-client-js"
+// }
 
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
 
-model employee {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  email     String   @unique
-  salary    Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-}
+// model employee {
+//   id        String   @id @default(uuid())
+//   firstName String
+//   lastName  String
+//   email     String   @unique
+//   salary    Float
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @default(now()) @updatedAt
+// }
 
-model user {
-  id                   String    @id @default(uuid())
-  userName             String    @unique
-  email                String    @unique
-  password             String
-  Role                 user_Role @default(USER)
-  profileImage         String?
-  profileImagePublicId String?
-  isEmailVerified      Boolean   @default(false)
-  tokenHash            String?
-  tokenExpiry          DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @default(now()) @updatedAt
-}
+// model user {
+//   id                   String    @id @default(uuid())
+//   userName             String    @unique
+//   email                String    @unique
+//   password             String
+//   Role                 user_Role @default(USER)
+//   profileImage         String?
+//   profileImagePublicId String?
+//   isEmailVerified      Boolean   @default(false)
+//   tokenHash            String?
+//   tokenExpiry          DateTime?
+//   createdAt            DateTime  @default(now())
+//   updatedAt            DateTime  @default(now()) @updatedAt
+// }
 
-enum user_Role {
-  ADMIN
-  USER
-}
+// enum user_Role {
+//   ADMIN
+//   USER
+// }

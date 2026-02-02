@@ -9,7 +9,7 @@ export interface UpdateEmployeeDTO {
   salary?: number;
 }
 
-export const employeeSqlModel = {
+export const employeeModel = {
   // GET ALL
   getAllEmployees: async (): Promise<Employee[]> => {
     const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM employee");
@@ -79,7 +79,7 @@ export const employeeSqlModel = {
     ]);
 
     // Return updated employee
-    const updated = await employeeSqlModel.getEmployeeById(id);
+    const updated = await employeeModel.getEmployeeById(id);
     if (!updated) throw new Error("Employee not found after update");
     return updated;
   },

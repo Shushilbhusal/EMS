@@ -1,10 +1,11 @@
-import prisma from "../../lib/db.js";
+// import prisma from "../../lib/db.js";
+import { employeeModel } from "../../models/empModel.js";
 import type { Request, Response } from "express";
 
 // Get all employees
 export const getAllEmployees = async (req: Request, res: Response) => {
   try {
-    const employees = await prisma.employee.findMany();
+    const employees = await employeeModel.getAllEmployees();
     res.status(200).json(employees);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch employees" });
@@ -20,7 +21,7 @@ export const getEmployee = async (req: Request, res: Response) => {
     if (!id || Array.isArray(id)) {
       return res.status(400).json({ error: "Invalid employee id" });
     }
-    const employee = await prisma.employee.findUnique({ where: { id } });
+    const employee = await employeeModel.getEmployeeById(id);
 
     if (!employee) return res.status(404).json({ error: "Employee not found" });
 
@@ -38,15 +39,12 @@ export const createEmployee = async (req: Request, res: Response) => {
     if (!firstName || !lastName || !email || !salary) {
       return res.status(400).json({ error: "all fields are required" });
     }
-    console.log(req.body);
 
-    const newEmployee = await prisma.employee.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        salary: Number(salary),
-      },
+    const newEmployee = await employeeModel.createEmployee({
+      firstName,
+      lastName,
+      email,
+      salary,
     });
 
     res.status(201).json({
@@ -72,16 +70,12 @@ export const updateEmployee = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "all fields are required" });
     }
 
-    const updatedEmployee = await prisma.employee.update({
-      where: { id },
-      data: {
-        firstName,
-        lastName,
-        email,
-        ...(salary && { salary: Number(salary) }),
-      },
+    const updatedEmployee = await employeeModel.updateEmployee(id, {
+      firstName,
+      lastName,
+      email,
+      salary,
     });
-
     res.status(200).json({
       message: "Updated Successfully",
       data: updatedEmployee,
@@ -99,8 +93,9 @@ export const deleteEmployee = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid employee id" });
     }
 
-    await prisma.employee.delete({ where: { id } });
+    const deleted = await employeeModel.deleteEmployee(id);
 
+    if (!deleted) return res.status(404).json({ error: "Employee not found" });
     res.status(200).json({ message: "Employee deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete employee" });

@@ -5,7 +5,7 @@ import {
   createEmployee,
   updateEmployee,
   deleteEmployee,
-} from "../controller/empController.ts/employeeController.js";
+} from "../controllers/empController.ts/employeeController.js";
 import { isLoggedIn } from "../middleware/authentication.js";
 import { authorize } from "../middleware/authorization.js";
 

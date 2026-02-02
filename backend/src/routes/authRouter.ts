@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getProfile, login, logout, register, updateProfile, verifyEmail } from "../controller/authController/authentication.js";
+import { getProfile, login, logout, register, updateProfile, verifyEmail } from "../controllers/authController/authentication.js";
 import { isLoggedIn } from "../middleware/authentication.js";
 import { handleFileUpload } from "../config/multer.js";
 

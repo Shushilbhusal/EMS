@@ -8,19 +8,22 @@ import {
 } from "../../config/cloudnary.js";
 import { generateVerificationToken } from "../../lib/generateToken.js";
 import { mailer } from "../../lib/mailer.js";
+import { pool } from "../../config/db.js";
 import crypto from "crypto";
+import type { RowDataPacket } from "mysql2";
+import type { User } from "../../types/userType.js";
+import { userModel } from "../../models/userModel.js";
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  console.log(email, password)
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    const user = await userModel.getUserByEmail(email);
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "user did not registered" });
     }
 
+    if (!user.password) {
+      return res.status(401).json({ error: "password required" });
+    }
     if (!user.isEmailVerified) {
       return res.status(403).json({ error: "Email not verified" });
     }
@@ -32,7 +35,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.Role },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET as string,
       { expiresIn: "1h" },
     );
@@ -64,10 +67,7 @@ export const getProfile = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     const userIdString = String(userId);
-    const user = await prisma.user.findUnique({
-      where: { id: userIdString },
-      select: { id: true, email: true, userName: true, Role: true, profileImage: true },
-    });
+    const user = await userModel.getProfileById(userIdString);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -82,19 +82,19 @@ export const register = async (req: Request, res: Response) => {
   const { email, password, userName } = req.body;
   try {
     // check if user already exist
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await userModel.getUserByEmail(email);
 
     if (existingUser && existingUser.isEmailVerified === true) {
       return res.status(409).json({ message: "Email already registered" });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        userName,
-        password: hashedPassword,
-        isEmailVerified: false,
-      },
+    const isEmailVerified = false;
+    const newUser = await userModel.createUser({
+      userName,
+      email,
+      password: hashedPassword,
+      isEmailVerified,
     });
     const { rawToken, tokenHash } = generateVerificationToken();
     await prisma.user.update({
@@ -165,7 +165,6 @@ export const updateProfile = async (req: Request, res: Response) => {
   try {
     const { userName, email, password, role } = req.body;
     const profileImagePath = req.file?.path;
-    console.log(profileImagePath)
     const { id } = req.params;
 
     if (!id || typeof id !== "string") {
@@ -176,9 +175,7 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     //  Find user by ID
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
+    const user = await userModel.getProfileById(id);
 
     if (!user) {
       return res.status(404).json({
@@ -222,16 +219,13 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     // Update user
-    const updatedProfile = await prisma.user.update({
-      where: { id },
-      data: {
-        userName: userName ?? user.userName,
-        email: email ?? user.email,
-        Role: role ?? user.Role,
-        password: hashedPassword,
-        profileImage: newProfileImage,
-        profileImagePublicId: newProfileImagePublicId,
-      },
+    const updatedProfile = await userModel.updateUser(id, {
+      userName: userName ?? user.userName,
+      email: email ?? user.email,
+      role: role ?? user.role,
+      password: password ?? user.password,
+      profileImage: newProfileImage ?? undefined,
+      profileImagePublicId: newProfileImagePublicId ?? undefined,
     });
 
     return res.status(200).json({
