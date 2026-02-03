@@ -4,6 +4,8 @@ import { DeleteIcon, Edit2, PlusIcon, Search, Filter, X } from "lucide-react";
 import EmployeeCreateForm from "./createEmployee";
 import UpdateEmployee from "./updateEmployee";
 import { useNavigate } from "react-router-dom";
+import { confirmDelete } from "../utils/confirmDelete";
+import { toast } from "react-toastify";
 
 export type EmployeeType = {
   id?: string;
@@ -88,21 +90,24 @@ const Employee = () => {
   }, [currentPage, limit, navigate]);
 
   const handleDelete = async (id: string | undefined) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
+    confirmDelete(async()=> {
       try {
         const response = await axios.delete(
           `${import.meta.env.VITE_API_URL}/api/employee/delete/${id}`,
           { withCredentials: true },
         );
         if (response.status === 200) {
-          alert(response.data.message);
+          toast.success(response.data.message);
           setEmployees((prev) => prev.filter((employee) => employee.id !== id));
         }
       } catch (error) {
         console.error("Error deleting employee:", error);
-        alert(error);
+        if(error === "string"){
+          toast.error(error);
+        }
       }
     }
+  )
   };
 
   const filteredEmployees = employees

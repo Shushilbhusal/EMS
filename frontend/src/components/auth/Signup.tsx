@@ -12,6 +12,7 @@ import {
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import axios, { AxiosError } from "axios";
+import { toast } from "react-toastify";
 
 // form validation using zod
 const signUpSchema = z.object({
@@ -57,10 +58,9 @@ const SignUpPage: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/api/auth/register`,
         { userName, email, password },
       );
-      console.log(response.data);
 
       if (response.status === 201) {
-        alert(response.data.message);
+        toast.success(response.data.message);
         setUserName("");
         setEmail("");
         setPassword("");
@@ -68,7 +68,7 @@ const SignUpPage: React.FC = () => {
       }
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
-      alert(
+      toast.error(
         axiosError.response?.data?.message || "Registration failed. Try again.",
       );
     } finally {
