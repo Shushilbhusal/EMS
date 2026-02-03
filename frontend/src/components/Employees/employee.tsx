@@ -30,7 +30,7 @@ const Employee = () => {
   const navigate = useNavigate();
 
   const addEmployeeToUI = (newEmployee: EmployeeType) => {
-    setEmployees((prev) => [newEmployee, ...prev]);
+    setEmployees((prev) => [...prev, newEmployee]);
   };
 
   const addUpdatedEmployeeToUI = (updatedEmployee: EmployeeType) => {

@@ -46,6 +46,7 @@ export const createEmployee = async (req: Request, res: Response) => {
       email,
       salary,
     });
+    // console.log(newEmployee)
 
     res.status(201).json({
       message: "Employee created successfully",

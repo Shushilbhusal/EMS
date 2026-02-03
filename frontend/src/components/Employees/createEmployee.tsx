@@ -75,7 +75,7 @@ const EmployeeCreateForm: React.FC<{
         },
       );
 
-      if (response.status === 201) {
+      if (response.status === 201 && response.data.data) {
         alert(response.data.message);
         onSuccess(response.data.data);
         onClose();
@@ -92,7 +92,10 @@ const EmployeeCreateForm: React.FC<{
 
   return (
     <div className="p-3 sm:p-4 md:p-5 lg:p-6">
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 sm:space-y-5 md:space-y-6"
+      >
         {/* First Name & Last Name Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
           <div>
@@ -175,7 +178,9 @@ const EmployeeCreateForm: React.FC<{
         {/* Salary Field */}
         <div>
           <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-            <span className="text-[#dd2d4a] text-sm sm:text-base font-medium">Rs.</span>
+            <span className="text-[#dd2d4a] text-sm sm:text-base font-medium">
+              Rs.
+            </span>
             Salary
           </label>
           <div className="relative">
@@ -190,7 +195,6 @@ const EmployeeCreateForm: React.FC<{
                 errors.salary ? "border-red-300" : "border-gray-200"
               } rounded-lg sm:rounded-xl focus:outline-none focus:border-[#dd2d4a] focus:ring-2 sm:focus:ring-3 focus:ring-[#f49cbb]/20 transition-all duration-200 appearance-none`}
             />
-            
           </div>
           {errors.salary && (
             <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1">
@@ -198,7 +202,6 @@ const EmployeeCreateForm: React.FC<{
               {errors.salary}
             </p>
           )}
-          
         </div>
 
         {/* Action Buttons */}
@@ -218,11 +221,15 @@ const EmployeeCreateForm: React.FC<{
             {loading ? (
               <>
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span className="text-xs sm:text-sm md:text-base">Creating...</span>
+                <span className="text-xs sm:text-sm md:text-base">
+                  Creating...
+                </span>
               </>
             ) : (
               <>
-                <span className="text-xs sm:text-sm md:text-base">Create Employee</span>
+                <span className="text-xs sm:text-sm md:text-base">
+                  Create Employee
+                </span>
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 sm:group-hover:translate-x-2 transition-transform duration-300" />
               </>
             )}

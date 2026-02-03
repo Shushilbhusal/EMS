@@ -1,6 +1,7 @@
 import type { Employee } from "../types/userType.js";
 import { pool } from "../config/db.js";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
+import { v4 as uuidv4 } from "uuid";
 
 export interface UpdateEmployeeDTO {
   firstName?: string;
@@ -12,7 +13,7 @@ export interface UpdateEmployeeDTO {
 export const employeeModel = {
   // GET ALL
   getAllEmployees: async (): Promise<Employee[]> => {
-    const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM employee");
+    const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM employee ORDER BY createdAt DESC");
     // A type for a row returned from a SELECT query in mysql2
     return rows as Employee[];
   },
@@ -27,22 +28,28 @@ export const employeeModel = {
   },
 
   // CREATE
-  createEmployee: async (
-    employee: Omit<Employee, "id" | "createdAt" | "updatedAt">,
-  ): Promise<Employee> => {
-    const { firstName, lastName, email, salary } = employee;
-    const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO employee (firstName, lastName, email, salary)
-       VALUES (?, ?, ?, ?)`,
-      [firstName, lastName, email, salary],
-    );
 
-    // Get the inserted employee
-    const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT * FROM employee WHERE id = LAST_INSERT_ID()",
-    );
-    return rows[0] as Employee;
-  },
+createEmployee: async (
+  employee: Omit<Employee, "id" | "createdAt" | "updatedAt">,
+): Promise<Employee> => {
+  const { firstName, lastName, email, salary } = employee;
+  const id = uuidv4(); // generate a new UUID
+
+  await pool.query(
+    `INSERT INTO employee (id, firstName, lastName, email, salary)
+     VALUES (?, ?, ?, ?, ?)`,
+    [id, firstName, lastName, email, salary],
+  );
+
+  // Now we know the id, so we can fetch it
+  const [rows] = await pool.query<RowDataPacket[]>(
+    "SELECT * FROM employee WHERE id = ?",
+    [id],
+  );
+
+  return rows[0] as Employee;
+},
+
 
   // UPDATE
   updateEmployee: async (
