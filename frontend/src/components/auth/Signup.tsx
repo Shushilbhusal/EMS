@@ -57,6 +57,7 @@ const SignUpPage: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/api/auth/register`,
         { userName, email, password },
       );
+      console.log(response.data);
 
       if (response.status === 201) {
         alert(response.data.message);

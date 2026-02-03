@@ -1,17 +1,13 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import prisma from "../../lib/db.js";
 import {
   deleteMediaFromCloudinary,
   uploadMedia,
 } from "../../config/cloudnary.js";
 import { generateVerificationToken } from "../../lib/generateToken.js";
 import { mailer } from "../../lib/mailer.js";
-import { pool } from "../../config/db.js";
 import crypto from "crypto";
-import type { RowDataPacket } from "mysql2";
-import type { User } from "../../types/userType.js";
 import { userModel } from "../../models/userModel.js";
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -85,7 +81,9 @@ export const register = async (req: Request, res: Response) => {
     const existingUser = await userModel.getUserByEmail(email);
 
     if (existingUser && existingUser.isEmailVerified === true) {
+      console.log("ERROR inside email verificaton true")
       return res.status(409).json({ message: "Email already registered" });
+      
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -97,29 +95,26 @@ export const register = async (req: Request, res: Response) => {
       isEmailVerified,
     });
     const { rawToken, tokenHash } = generateVerificationToken();
-    await prisma.user.update({
-      where: {
-        email: email,
-      },
-      data: {
-        tokenExpiry: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
-        tokenHash: tokenHash,
-      },
-    });
-
+    const tokenExpiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+    await userModel.updateTokenExpiry(email, tokenHash, tokenExpiry);
     const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${rawToken}`;
 
-    await mailer.sendMail({
-      from: `"Employee System" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Verify your email",
-      html: `
+    try {
+      await mailer.sendMail({
+        from: `"Employee System" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "Verify your email",
+        html: `
       <h2>Email Verification</h2>
-      <p>Click the link below to verify your email:</p>
+      <p>Click the link below:</p>
       <a href="${verifyUrl}">${verifyUrl}</a>
       <p>This link expires in 1 hour.</p>
     `,
-    });
+      });
+    } catch (mailError) {
+      console.log("email error", mailError)
+      console.error("Email send failed:", mailError);
+    }
 
     res.status(201).json({
       message: "User registered click Link in gmail to verify email",
@@ -141,21 +136,13 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-  const storedToken = await prisma.user.findFirst({
-    where: {
-      tokenHash,
-      tokenExpiry: { gt: new Date() },
-    },
-  });
+  const storedToken = await userModel.verifyEmailToken(tokenHash);
 
   if (!storedToken) {
     return res.status(400).json({ message: "Token expired or invalid" });
   }
 
-  await prisma.user.update({
-    where: { id: storedToken.id },
-    data: { isEmailVerified: true, tokenExpiry: null, tokenHash: null },
-  });
+  await userModel.markEmailVerified(storedToken.id);
 
   res.status(200).json({ message: "Email verified successfully" });
 };
