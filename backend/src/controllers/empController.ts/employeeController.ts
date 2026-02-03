@@ -5,8 +5,20 @@ import type { Request, Response } from "express";
 // Get all employees
 export const getAllEmployees = async (req: Request, res: Response) => {
   try {
-    const employees = await employeeModel.getAllEmployees();
-    res.status(200).json(employees);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 5;
+
+    const { data, total } = await employeeModel.getAllEmployees(page, limit);
+    res.status(200).json({
+      data,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1,
+      },
+    });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch employees" });
   }

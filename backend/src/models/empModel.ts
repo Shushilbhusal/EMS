@@ -10,12 +10,32 @@ export interface UpdateEmployeeDTO {
   salary?: number;
 }
 
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+}
+
+
 export const employeeModel = {
   // GET ALL
-  getAllEmployees: async (): Promise<Employee[]> => {
-    const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM employee ORDER BY createdAt DESC");
+  getAllEmployees: async (page: number, limit: number): Promise<PaginatedResult<Employee>> => {
+    const offset = (page - 1) * limit; // page=current page number, limit=rows per page
+    const [rows] = await pool.query<RowDataPacket[]>(
+      "SELECT * FROM employee ORDER BY createdAt DESC LIMIT ? OFFSET ?",
+      [limit, offset],
+    );
+
+    // get total count
+    const [countRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM employee`,
+    );
+    const total = countRows[0]?.total as number;
     // A type for a row returned from a SELECT query in mysql2
-    return rows as Employee[];
+
+    return {
+      data: rows as Employee[],
+      total,
+    };
   },
 
   // GET ONE
@@ -29,27 +49,26 @@ export const employeeModel = {
 
   // CREATE
 
-createEmployee: async (
-  employee: Omit<Employee, "id" | "createdAt" | "updatedAt">,
-): Promise<Employee> => {
-  const { firstName, lastName, email, salary } = employee;
-  const id = uuidv4(); // generate a new UUID
+  createEmployee: async (
+    employee: Omit<Employee, "id" | "createdAt" | "updatedAt">,
+  ): Promise<Employee> => {
+    const { firstName, lastName, email, salary } = employee;
+    const id = uuidv4(); // generate a new UUID
 
-  await pool.query(
-    `INSERT INTO employee (id, firstName, lastName, email, salary)
+    await pool.query(
+      `INSERT INTO employee (id, firstName, lastName, email, salary)
      VALUES (?, ?, ?, ?, ?)`,
-    [id, firstName, lastName, email, salary],
-  );
+      [id, firstName, lastName, email, salary],
+    );
 
-  // Now we know the id, so we can fetch it
-  const [rows] = await pool.query<RowDataPacket[]>(
-    "SELECT * FROM employee WHERE id = ?",
-    [id],
-  );
+    // Now we know the id, so we can fetch it
+    const [rows] = await pool.query<RowDataPacket[]>(
+      "SELECT * FROM employee WHERE id = ?",
+      [id],
+    );
 
-  return rows[0] as Employee;
-},
-
+    return rows[0] as Employee;
+  },
 
   // UPDATE
   updateEmployee: async (

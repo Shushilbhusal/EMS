@@ -16,6 +16,20 @@ export type EmployeeType = {
 type SortField = "name" | "salary" | null;
 type SortOrder = "asc" | "desc";
 
+type PaginationMeta = {
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+};
+
+type PaginatedResponse<T> = {
+  data: T[];
+  pagination: PaginationMeta;
+};
+
 const Employee = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [employees, setEmployees] = React.useState<EmployeeType[]>([]);
@@ -26,6 +40,10 @@ const Employee = () => {
   const [sortField, setSortField] = React.useState<SortField>(null);
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("asc");
   const [isSortDropdownOpen, setIsSortDropdownOpen] = React.useState(false);
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [limit] = React.useState(5); // fixed per page
+  const [totalPages, setTotalPages] = React.useState(1);
 
   const navigate = useNavigate();
 
@@ -43,12 +61,20 @@ const Employee = () => {
   React.useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await axios.get<EmployeeType[]>(
+        const response = await axios.get<PaginatedResponse<EmployeeType>>(
           `${import.meta.env.VITE_API_URL}/api/employee/getAll`,
-          { withCredentials: true },
+
+          {
+            params: {
+              page: currentPage,
+              limit,
+            },
+            withCredentials: true,
+          },
         );
 
-        setEmployees(response.data);
+        setEmployees(response.data.data);
+        setTotalPages(response.data.pagination.totalPages);
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 403) {
           navigate("/403");
@@ -59,7 +85,7 @@ const Employee = () => {
     };
 
     fetchEmployees();
-  }, []);
+  }, [currentPage, limit, navigate]);
 
   const handleDelete = async (id: string | undefined) => {
     if (window.confirm("Are you sure you want to delete this employee?")) {
@@ -625,6 +651,57 @@ const Employee = () => {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center items-center gap-2">
+              {/* Prev */}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium
+        ${
+          currentPage === 1
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-white hover:bg-gray-50 text-gray-700"
+        }`}
+              >
+                Prev
+              </button>
+
+              {/* Page numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium
+          ${
+            currentPage === page
+              ? "bg-gradient-to-r from-[#dd2d4a] to-[#880d1e] text-white"
+              : "bg-white hover:bg-gray-50 text-gray-700"
+          }`}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+
+              {/* Next */}
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium
+        ${
+          currentPage === totalPages
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-white hover:bg-gray-50 text-gray-700"
+        }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
 
           {filteredEmployees.length === 0 && (
             <div className="text-center py-16">
