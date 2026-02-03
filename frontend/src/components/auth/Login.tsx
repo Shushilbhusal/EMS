@@ -5,6 +5,7 @@ import { RxCrossCircled } from "react-icons/rx";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 // Zod schema
 const loginSchema = z.object({
@@ -41,7 +42,6 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      console.log(`${import.meta.env.VITE_API_URL}/api/auth/login`);
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/login`,
         { email, password },
@@ -49,10 +49,13 @@ const LoginPage: React.FC = () => {
       );
 
       localStorage.setItem("token", response.data.token);
-      alert(response.data.message);
+      // alert(response.data.message);
+      toast.success(response.data.message, {
+        position: "bottom-right",
+      });
       navigate("/employees");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Login failed");
+      toast.error(err.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }

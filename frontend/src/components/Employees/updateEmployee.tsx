@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { User, Mail, ArrowRight } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface Employee {
   id?: string;
@@ -70,7 +71,7 @@ const UpdateEmployee: React.FC<{
       );
 
       if (response.status === 200) {
-        alert(response.data.message);
+        toast.success(response.data.message);
         onSuccess(formData);
         onClose();
       }
@@ -78,7 +79,7 @@ const UpdateEmployee: React.FC<{
       const errorMessage = axios.isAxiosError(err)
         ? err.response?.data?.message || "Error updating employee"
         : "Error updating employee";
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

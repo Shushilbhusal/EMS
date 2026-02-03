@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import z from "zod";
 import type { EmployeeType } from "./employee";
 import { User, Mail, ArrowRight } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface EmployeeFormData {
   firstName: string;
@@ -76,7 +77,7 @@ const EmployeeCreateForm: React.FC<{
       );
 
       if (response.status === 201 && response.data.data) {
-        alert(response.data.message);
+        toast.success(response.data.message);
         onSuccess(response.data.data);
         onClose();
       }
@@ -84,7 +85,7 @@ const EmployeeCreateForm: React.FC<{
       const message = axios.isAxiosError(error)
         ? error.response?.data?.message || "Error creating employee"
         : "Error creating employee";
-      alert(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
