@@ -1,4 +1,6 @@
 // import prisma from "../../lib/db.js";
+import { AppError } from "../../lib/appError.js";
+import { asyncHandler } from "../../middleware/asyncHandler.js";
 import { employeeModel } from "../../models/empModel.js";
 import type { Request, Response } from "express";
 
@@ -44,12 +46,12 @@ export const getEmployee = async (req: Request, res: Response) => {
 };
 
 // Create new employee
-export const createEmployee = async (req: Request, res: Response) => {
-  try {
+export const createEmployee = asyncHandler(
+  async (req: Request, res: Response) => {
     const { firstName, lastName, email, salary } = req.body;
 
     if (!firstName || !lastName || !email || !salary) {
-      return res.status(400).json({ error: "all fields are required" });
+      throw new AppError("All fields are required", 400);
     }
 
     const newEmployee = await employeeModel.createEmployee({
@@ -58,16 +60,13 @@ export const createEmployee = async (req: Request, res: Response) => {
       email,
       salary,
     });
-    // console.log(newEmployee)
 
     res.status(201).json({
       message: "Employee created successfully",
       data: newEmployee,
     });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create employee" });
-  }
-};
+  },
+);
 
 // Update employee
 export const updateEmployee = async (req: Request, res: Response) => {
