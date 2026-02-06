@@ -6,6 +6,7 @@ import UpdateEmployee from "./updateEmployee";
 import { useNavigate } from "react-router-dom";
 import { confirmDelete } from "../utils/confirmDelete";
 import { toast } from "react-toastify";
+import SimpleTableSkeleton from "../pages/skeleton";
 
 export type EmployeeType = {
   id?: string;
@@ -37,6 +38,7 @@ const Employee = () => {
   const [employees, setEmployees] = React.useState<EmployeeType[]>([]);
   const [isCreateModelOpen, setIsCreateModelOpen] = React.useState(false);
   const [isUpdateModelOpen, setIsUpdateModelOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [selectedEmployee, setSelectedEmployee] =
     React.useState<EmployeeType | null>(null);
   const [sortField, setSortField] = React.useState<SortField>(null);
@@ -63,6 +65,7 @@ const Employee = () => {
   React.useEffect(() => {
     const fetchEmployees = async () => {
       try {
+        setLoading(true);
         const response = await axios.get<PaginatedResponse<EmployeeType>>(
           `${import.meta.env.VITE_API_URL}/api/employee/getAll`,
 
@@ -77,12 +80,15 @@ const Employee = () => {
 
         setEmployees(response.data.data);
         setTotalPages(response.data.pagination.totalPages);
+        setLoading(false);
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 403) {
           navigate("/403");
           return;
         }
         console.error("Error fetching employees:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -90,7 +96,7 @@ const Employee = () => {
   }, [currentPage, limit, navigate]);
 
   const handleDelete = async (id: string | undefined) => {
-    confirmDelete(async()=> {
+    confirmDelete(async () => {
       try {
         const response = await axios.delete(
           `${import.meta.env.VITE_API_URL}/api/employee/delete/${id}`,
@@ -102,12 +108,11 @@ const Employee = () => {
         }
       } catch (error) {
         console.error("Error deleting employee:", error);
-        if(error === "string"){
+        if (error === "string") {
           toast.error(error);
         }
       }
-    }
-  )
+    });
   };
 
   const filteredEmployees = employees
@@ -135,6 +140,18 @@ const Employee = () => {
 
       return 0;
     });
+
+  if (loading) {
+    return (
+      <div>
+        <SimpleTableSkeleton
+          rows={8}
+          columns={3}
+          
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
